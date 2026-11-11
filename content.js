@@ -58,6 +58,75 @@ function plainText(text) {
     .trim()
 }
 
+/** Tool-call argument keys that make the most useful one-line detail, best first. */
+const DETAIL_KEYS = ['command', 'cmd', 'script', 'path', 'file_path', 'pattern', 'query', 'url', 'description']
+/** Display cap for a tool call's detail line. */
+const DETAIL_LIMIT = 120
+
+/** Collapse whitespace and bound one line of raw text (commands keep their characters). */
+function clipOneLine(value, limit) {
+  const normalized = String(value).replace(/\s+/gu, ' ').trim()
+  if (normalized === '') return undefined
+  return normalized.length > limit ? `${normalized.slice(0, limit - 1).trimEnd()}…` : normalized
+}
+
+/** Longest command still worth showing verbatim; past it the description reads better. */
+const COMMAND_LIMIT = 100
+/** Above the command limit a short description is capped tighter. */
+const DESCRIPTION_LIMIT = 60
+
+/** The most telling one-line detail of one tool call's raw arguments. */
+function toolDetailOf(rawArguments) {
+  if (typeof rawArguments !== 'string' || rawArguments.trim() === '') return undefined
+  let parsed
+  try {
+    parsed = JSON.parse(rawArguments)
+  } catch {
+    return clipOneLine(rawArguments, DETAIL_LIMIT)
+  }
+  if (parsed === null || typeof parsed !== 'object') return clipOneLine(String(parsed), DETAIL_LIMIT)
+  const description = typeof parsed.description === 'string' && parsed.description.trim() !== '' ? parsed.description : undefined
+  for (const key of DETAIL_KEYS) {
+    const value = parsed[key]
+    if (typeof value !== 'string' || value.trim() === '') continue
+    // A long shell script is unreadable in a banner; its description says more.
+    if ((key === 'command' || key === 'cmd' || key === 'script') && value.length > COMMAND_LIMIT && description !== undefined) {
+      return clipOneLine(description, DESCRIPTION_LIMIT)
+    }
+    return clipOneLine(value, DETAIL_LIMIT)
+  }
+  return clipOneLine(rawArguments, DETAIL_LIMIT)
+}
+
+/**
+ * Find the tool call a pending approval is about and describe it for a banner.
+ *
+ * The assistant message carrying the call is committed before the approval
+ * waterfall runs, so the derived message history already contains it by the
+ * time the alert fires. The exact `callId` is preferred; the most recent call
+ * with the same tool name is the fallback when the asker supplied no call id.
+ *
+ * @param messages - the session's derived model-visible messages, oldest first.
+ * @param callId - the approval's correlated tool call, when the asker had one.
+ * @param toolName - the tool requiring the decision.
+ * @returns {{ name?: string, detail?: string } | undefined}
+ */
+export function describeToolCall(messages, callId, toolName) {
+  if (!Array.isArray(messages)) return undefined
+  let fallback
+  for (const message of messages) {
+    if (message?.role !== 'assistant' || !Array.isArray(message.content)) continue
+    for (const block of message.content) {
+      if (block?.type !== 'tool-call' || typeof block.name !== 'string') continue
+      if (callId !== undefined && String(block.id) === String(callId)) {
+        return { name: block.name, detail: toolDetailOf(block.arguments) }
+      }
+      if (toolName !== undefined && block.name === toolName) fallback = block
+    }
+  }
+  return fallback === undefined ? undefined : { name: fallback.name, detail: toolDetailOf(fallback.arguments) }
+}
+
 /** Bound one preview, clipping on a word boundary when the cut lands mid-word. */
 function clipPreview(text) {
   if (text.length <= PREVIEW_LIMIT) return text

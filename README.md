@@ -5,14 +5,15 @@
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 DSH 插件：会话**完成一轮任务**或**等待你审批**时弹出系统桌面通知。默认只在 Harness 窗口不在前台时
-提醒，点击通知回到 Harness。
+提醒；点击通知跳到对应会话。
 
 | 任务完成 | 需要审批 |
 |---|---|
 | <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/turn-complete.png" width="420" alt="任务完成通知：任务完成 / Codex 任务完成通知机制调研" /> | <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/approval-requested.png" width="420" alt="需要审批通知：需要审批 / Codex 任务完成通知机制调研 · bash" /> |
 
 - 只提醒根会话：子 agent、队友静默，多 agent 并行不刷屏。
-- 完成通知的正文是本轮结论摘要，不是会话标题。
+- 完成通知显示本轮结论摘要；审批通知显示要执行的命令和原因。
+- 点击通知跳到对应会话。
 - 默认失焦才提醒（`condition: "unfocused"`），可改成 `always`。
 - 设置页可调总开关、提醒时机、事件类型和审批宽限。
 
