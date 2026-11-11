@@ -47,6 +47,14 @@
     "desktop"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HMYDK/dsh-notify.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HMYDK/dsh-notify/issues"
+  },
+  "homepage": "https://github.com/HMYDK/dsh-notify#readme",
   "dependencies": {
     "@deepseek-ai/schemastery": "^3.18.5"
   }
