@@ -9,7 +9,7 @@ DSH 插件：会话**完成一轮任务**或**等待你审批**时弹出系统�
 
 | 任务完成 | 需要审批 |
 |---|---|
-| <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/turn-complete.png" width="420" alt="任务完成通知：任务完成 / Codex 任务完成通知机制调研" /> | <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/approval-requested.png" width="420" alt="需要审批通知：需要审批 / Codex 任务完成通知机制调研 · bash" /> |
+| <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/turn-complete.png" width="420" alt="任务完成通知：正文显示本轮结论摘要" /> | <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/approval-requested.png" width="420" alt="需要审批通知：显示要执行的命令和审批原因" /> |
 
 - 只提醒根会话：子 agent、队友静默，多 agent 并行不刷屏。
 - 完成通知显示本轮结论摘要；审批通知显示要执行的命令和原因。
