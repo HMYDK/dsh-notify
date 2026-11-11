@@ -1,6 +1,6 @@
 # dsh-notify · desktop notifications for DeepSeek Harness
 
-![version](https://img.shields.io/badge/version-0.1.0-blue)
+[![npm](https://img.shields.io/npm/v/@hmydk/dsh-notify?label=npm)](https://www.npmjs.com/package/@hmydk/dsh-notify)
 ![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
@@ -21,7 +21,7 @@ Two native notifications, rendered by the Harness app and attributed to it:
 
 | Turn complete | Approval needed |
 |---|---|
-| <img src="docs/screenshots/turn-complete.png" width="420" alt="Turn-complete notification: 任务完成 / Codex 任务完成通知机制调研" /> | <img src="docs/screenshots/approval-requested.png" width="420" alt="Approval notification: 需要审批 / Codex 任务完成通知机制调研 · bash" /> |
+| <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/turn-complete.png" width="420" alt="Turn-complete notification: 任务完成 / Codex 任务完成通知机制调研" /> | <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/approval-requested.png" width="420" alt="Approval notification: 需要审批 / Codex 任务完成通知机制调研 · bash" /> |
 
 - **Turn-complete alert** — a root session leaves `running` for `idle` while the Harness window is in the background; the banner carries the session title.
 - **Approval alert** — a tool call is still waiting for your approval after the grace window, so requests that resolve themselves stay quiet; the banner names the session and the tool.
@@ -163,6 +163,22 @@ When you install from a local checkout with `link:`, Node resolves the plugin's 
 the checkout, not from the profile. Run `pnpm install --prod` (or `npm install --omit=dev`) once in
 this directory so `@deepseek-ai/schemastery` exists under `node_modules`; npm-published installs
 resolve it automatically and need no extra step.
+
+### Releasing
+
+Releases are published from GitHub Actions through npm trusted publishing (OIDC); no npm token is
+stored in the repository. Bump `version` in `package.json`, commit it, then tag the commit and push:
+
+```sh
+git tag v0.1.1
+git push origin main v0.1.1
+```
+
+The [Release workflow](.github/workflows/release.yml) checks the tag against `package.json`,
+publishes the package with provenance, and attaches the packed tarball and `SHA256SUMS.txt` to a
+GitHub Release. The npm-side trust relationship is repository `HMYDK/dsh-notify` + workflow
+`release.yml`; changing either name requires updating the package's Trusted Publisher settings on
+npmjs.com.
 
 ## License
 

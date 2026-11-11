@@ -1,6 +1,6 @@
 # dsh-notify · DeepSeek Harness 桌面通知
 
-![version](https://img.shields.io/badge/version-0.1.0-blue)
+[![npm](https://img.shields.io/npm/v/@hmydk/dsh-notify?label=npm)](https://www.npmjs.com/package/@hmydk/dsh-notify)
 ![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
@@ -20,7 +20,7 @@
 
 | 任务完成通知 | 需要审批通知 |
 |---|---|
-| <img src="docs/screenshots/turn-complete.png" width="420" alt="任务完成通知：任务完成 / Codex 任务完成通知机制调研" /> | <img src="docs/screenshots/approval-requested.png" width="420" alt="需要审批通知：需要审批 / Codex 任务完成通知机制调研 · bash" /> |
+| <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/turn-complete.png" width="420" alt="任务完成通知：任务完成 / Codex 任务完成通知机制调研" /> | <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/approval-requested.png" width="420" alt="需要审批通知：需要审批 / Codex 任务完成通知机制调研 · bash" /> |
 
 - **任务完成提醒**：根会话从 `running` 变为 `idle`、且 Harness 窗口不在前台时弹出，横幅里带会话标题。
 - **审批提醒**：工具调用在宽限时间后仍在等你审批才提醒，自动放行的请求不会打扰；横幅带会话名和工具名。
@@ -143,6 +143,21 @@ client-module 产物（`window.__ModuleLoader__.load({ id, factory })`），`cor
 用 `link:` 从本地目录安装时，Node 会从 checkout 目录解析插件自身依赖，而不是 profile 的
 `node_modules`。请先在本目录执行一次 `pnpm install --prod`（或 `npm install --omit=dev`），
 让 `@deepseek-ai/schemastery` 出现在本地 `node_modules` 下；从 npm 安装时会自动解析，无需额外步骤。
+
+### 发版
+
+发版由 GitHub Actions 通过 npm trusted publishing（OIDC）完成，仓库里不保存 npm token。
+把 `package.json` 的 `version` 改好并提交后，打 tag 推送即可：
+
+```sh
+git tag v0.1.1
+git push origin main v0.1.1
+```
+
+[Release workflow](.github/workflows/release.yml) 会校验 tag 与 `package.json` 版本一致，带 provenance
+发布到 npm，并把打包的 tarball 和 `SHA256SUMS.txt` 附到 GitHub Release 上。npm 侧的信任关系是
+仓库 `HMYDK/dsh-notify` + workflow `release.yml`；两处名字有变动时，需要在 npmjs.com 的包
+Trusted Publisher 设置里同步修改。
 
 ## 许可证
 
