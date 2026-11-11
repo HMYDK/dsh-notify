@@ -27,7 +27,7 @@
 - **默认只在失焦时提醒**（`condition: "unfocused"`），可在设置里改成 `always`。
 - **点击回到 Harness**：点通知会聚焦窗口。
 - **只提醒顶层会话**：子 agent、队友一律静默，多 agent 并行时不刷屏。
-- **按 profile 配置**：总开关、触发条件、事件类型、审批宽限都来自 profile patch 里 `dsh-notify` 行的 config（见[配置](#配置)）。
+- **设置页可调**：**设置 → 通知** 页里能改总开关、提醒时机、事件类型和审批宽限，改完立即生效，并自动写回 profile patch。
 
 通知文案跟随客户端语言；上面截图在中文环境截取，可用 [验证安装](#验证安装) 里的预览命令复现。
 
@@ -75,25 +75,13 @@ dsh plugin --profile web remove @hmydk/dsh-notify
 
 ## 配置
 
-DSH 0.2.x 还不会给第三方插件生成设置页，所以界面上没有可点的入口；配置要改 profile 的 Cordis patch——
-Desktop 是 `~/.dsh/profiles/desktop/cordis.patch.yml`，命令行 profile 是 `~/.dsh/profiles/<profile>/cordis.patch.yml`。
-在文件里追加：
+打开 **设置 → 通知**（设置入口在账户菜单里）。这一页包含总开关、提醒时机、事件类型和审批提醒延迟；
+修改会写入 profile 的 `cordis.patch.yml` 并实时推给运行中的 Host 半，不需要重启或刷新页面。
+**发送测试通知** 会绕过失焦条件立即弹一条测试横幅。
 
-```yaml
-- id: dsh-notify
-  config:
-    enabled: true
-    condition: unfocused # 或 always
-    events:
-      - turn-complete
-      - approval-requested
-    approvalGraceMs: 2000
-```
-
-保存后 DSH 会重载 patch，Host 半会把新配置推给已打开的页面；如果页面没更新，刷新一下（Cmd/Ctrl+R）。
-profile patch 会整体替换该条目的 `config`，但 schema 默认值和 Host 半的兜底会补上你没写的字段，建议四个都写全。
-
-bundle patch 里也固定了默认值：
+| 设置 → 通知 |
+|---|
+| <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/settings.png" width="560" alt="设置 → 通知：总开关、提醒时机、事件类型与审批宽限" /> |
 
 | 字段 | 类型 | 默认值 | 含义 |
 |---|---|---|---|
@@ -101,6 +89,22 @@ bundle patch 里也固定了默认值：
 | `condition` | `unfocused` \| `always` | `unfocused` | 仅窗口失焦时提醒，或总是提醒。 |
 | `events` | 数组，取值 `turn-complete`、`approval-requested` | 两者都开 | 触发提醒的事件类型。 |
 | `approvalGraceMs` | 数字（0–60000） | `2000` | 审批请求等待多久才提醒；自动放行的请求不会打扰你。 |
+
+还没有设置页的旧版本仍然可以按 profile patch 覆盖，路径：Desktop 是
+`~/.dsh/profiles/desktop/cordis.patch.yml`，命令行 profile 是 `~/.dsh/profiles/<profile>/cordis.patch.yml`：
+
+```yaml
+- id: dsh-notify
+  config:
+    enabled: true
+    condition: always
+    events:
+      - turn-complete
+      - approval-requested
+    approvalGraceMs: 2000
+```
+
+profile patch 会整体替换该条目的 `config`；schema 默认值和 Host 半的兜底会补上没写的字段，bundle patch 里是默认值。
 
 ## 验证安装
 
@@ -156,7 +160,9 @@ Host 进程                                     浏览器页面
 
 纯 ESM，无需构建。`index.js` 是 Host 半（`apply` + `Config`），`client.js` 是浏览器半的
 client-module 产物（`window.__ModuleLoader__.load({ id, factory })`），`cordis.patch.yml` 插入插件行，
-`locale/*.json` 提供插件管理器的标题与描述。改完任一半后需重装/重启让 Host 半重新加载；浏览器半刷新页面即可。
+`locale/*.json` 提供插件管理器的标题与描述。浏览器半还会把 **通知** 页注册进设置对话框的
+`settings.section` 槽，并通过客户端的 `configForms` 服务读写该行的 volatile 配置；`dsh.client.inject`
+会先加载提供该服务的设置客户端包。改完任一半后需重装/重启让 Host 半重新加载；浏览器半刷新页面即可。
 
 用 `link:` 从本地目录安装时，Node 会从 checkout 目录解析插件自身依赖，而不是 profile 的
 `node_modules`。请先在本目录执行一次 `pnpm install --prod`（或 `npm install --omit=dev`），

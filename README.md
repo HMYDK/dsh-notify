@@ -28,7 +28,7 @@ Two native notifications, rendered by the Harness app and attributed to it:
 - **Focus-aware by default** (`condition: "unfocused"`), switchable to `always` in Settings.
 - **Click to return** — clicking the notification focuses the Harness window.
 - **Top-level sessions only** — subagents and teammates never raise a banner, so parallel work stays quiet.
-- **Configurable per profile** — enabled, focus condition, event types and the approval grace come from the `dsh-notify` row's config in the profile patch (see [Configuration](#configuration)).
+- **Settings page** — **Settings → Notifications** carries the master switch, the focus condition, the event types and the approval grace; changes apply live and are written back to the profile patch.
 
 The banner copy follows the client locale; the screenshots above were captured on a Chinese-locale Harness and can be reproduced with the preview commands under [Verify an installation](#verify-an-installation).
 
@@ -80,27 +80,39 @@ dsh plugin --profile web remove @hmydk/dsh-notify
 
 ## Configuration
 
-DSH 0.2.x does not build a settings page for third-party plugins yet, so there is nothing to click.
-Change the row through your profile's Cordis patch instead — `~/.dsh/profiles/desktop/cordis.patch.yml`
-for the Desktop app, `~/.dsh/profiles/<profile>/cordis.patch.yml` for a CLI profile. Append:
+Open **Settings → Notifications** (the settings dialog lives in the account menu). The page carries
+the master switch, the focus condition, the event types and the approval grace; a change is written
+to the profile's `cordis.patch.yml` and streamed to the running Host half, so it applies immediately
+without a restart or a page reload. **Send a test notification** raises one forced banner.
+
+| Settings page |
+|---|
+| <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/settings.png" width="560" alt="Settings → Notifications: master switch, focus condition, events and approval grace" /> |
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `enabled` | boolean | `true` | Master switch. |
+| `condition` | `unfocused` \| `always` | `unfocused` | Notify only while the Harness window is unfocused, or always. |
+| `events` | array of `turn-complete`, `approval-requested` | both | Event types that raise a notification. |
+| `approvalGraceMs` | number (0–60000) | `2000` | Wait this long before alerting an approval request; requests that resolve automatically stay silent. |
+
+Releases without the settings page still accept the same values as a profile patch override —
+`~/.dsh/profiles/desktop/cordis.patch.yml` for the Desktop app, `~/.dsh/profiles/<profile>/cordis.patch.yml`
+for a CLI profile:
 
 ```yaml
 - id: dsh-notify
   config:
     enabled: true
-    condition: unfocused # or: always
+    condition: always
     events:
       - turn-complete
       - approval-requested
     approvalGraceMs: 2000
 ```
 
-Save the file and DSH reloads the patch; the Host half then pushes the new config to the open page.
-If the page does not pick it up, reload it (Cmd/Ctrl+R). A profile patch replaces the entry's
-`config` object, but schema defaults and the Host half's fallbacks fill in every field you leave
-out; writing all four is the least surprising.
-
-The bundle patch pins the defaults:
+A profile patch replaces the entry's `config` object; schema defaults and the Host half's fallbacks
+fill in whatever you leave out, and the bundle patch ships the defaults.
 
 | Field | Type | Default | Meaning |
 |---|---|---|---|
@@ -175,8 +187,10 @@ Host process                                   Browser page
 Plain ESM, no build step. `index.js` is the Host half (`apply` + `Config`), `client.js` is the
 browser artifact in client-module form (`window.__ModuleLoader__.load({ id, factory })`),
 `cordis.patch.yml` inserts the row, and `locale/*.json` supply the Plugin Manager title and
-description. After editing either half, reinstall/restart so the Host half reloads; the browser half
-reloads with the page.
+description. The browser half also registers the **Notifications** page into the settings dialog's
+`settings.section` slot and edits the row's volatile config through the client `configForms`
+service; `dsh.client.inject` keeps that settings client package loaded first. After editing either
+half, reinstall/restart so the Host half reloads; the browser half reloads with the page.
 
 When you install from a local checkout with `link:`, Node resolves the plugin's own dependency from
 the checkout, not from the profile. Run `pnpm install --prod` (or `npm install --omit=dev`) once in

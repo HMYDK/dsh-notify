@@ -5,9 +5,9 @@
 # server; the browser half ("./client.js", declared by `dsh.client` in
 # package.json) shows the native notification and applies the focus condition.
 #
-# The values below are defaults only: override any field from the profile's
-# cordis.patch.yml with an `- id: dsh-notify` + `config:` entry. DSH 0.2.x has
-# no generated settings page for third-party plugin rows.
+# The values below are defaults only: change them from Settings → Notifications
+# in the GUI (that page writes back through the profile's cordis.patch.yml), or
+# override the entry from the profile patch with `- id: dsh-notify` + `config:`.
 - insert:
     - id: dsh-notify
       name: '@hmydk/dsh-notify'

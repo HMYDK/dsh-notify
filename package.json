@@ -1,6 +1,6 @@
 {
   "name": "@hmydk/dsh-notify",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Desktop notifications for DeepSeek Harness: alerts when a session finishes a turn or needs your approval.",
   "icon": "icon.svg",
   "type": "module",
@@ -36,7 +36,10 @@
     },
     "client": {
       "platform": "web",
-      "immediately": true
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings"
+      ]
     }
   },
   "keywords": [
