@@ -1,0 +1,19 @@
+# dsh-notify bundle patch.
+#
+# One dual-face plugin row: the Host half ("./index.js") watches agent status and
+# approval requests and streams notification events over the loopback web
+# server; the browser half ("./client.js", declared by `dsh.client` in
+# package.json) shows the native notification and applies the focus condition.
+#
+# The settings page for this row is generated from the plugin's `Config`
+# schema, so every field below is also editable in Settings → Plugins.
+- insert:
+    - id: dsh-notify
+      name: '@hmydk/dsh-notify'
+      config:
+        enabled: true
+        condition: unfocused
+        events:
+          - turn-complete
+          - approval-requested
+        approvalGraceMs: 2000
