@@ -28,7 +28,7 @@ Two native notifications, rendered by the Harness app and attributed to it:
 - **Focus-aware by default** (`condition: "unfocused"`), switchable to `always` in Settings.
 - **Click to return** — clicking the notification focuses the Harness window.
 - **Top-level sessions only** — subagents and teammates never raise a banner, so parallel work stays quiet.
-- **Configurable in Settings** — the plugin row gets a settings page generated from its schema (enabled, condition, events, approval grace).
+- **Configurable per profile** — enabled, focus condition, event types and the approval grace come from the `dsh-notify` row's config in the profile patch (see [Configuration](#configuration)).
 
 The banner copy follows the client locale; the screenshots above were captured on a Chinese-locale Harness and can be reproduced with the preview commands under [Verify an installation](#verify-an-installation).
 
@@ -80,8 +80,27 @@ dsh plugin --profile web remove @hmydk/dsh-notify
 
 ## Configuration
 
-The row's settings page is generated from the plugin's `Config` schema, so the fields are editable
-in **Settings → Plugins → dsh-notify**; the bundle patch also pins the defaults:
+DSH 0.2.x does not build a settings page for third-party plugins yet, so there is nothing to click.
+Change the row through your profile's Cordis patch instead — `~/.dsh/profiles/desktop/cordis.patch.yml`
+for the Desktop app, `~/.dsh/profiles/<profile>/cordis.patch.yml` for a CLI profile. Append:
+
+```yaml
+- id: dsh-notify
+  config:
+    enabled: true
+    condition: unfocused # or: always
+    events:
+      - turn-complete
+      - approval-requested
+    approvalGraceMs: 2000
+```
+
+Save the file and DSH reloads the patch; the Host half then pushes the new config to the open page.
+If the page does not pick it up, reload it (Cmd/Ctrl+R). A profile patch replaces the entry's
+`config` object, but schema defaults and the Host half's fallbacks fill in every field you leave
+out; writing all four is the least surprising.
+
+The bundle patch pins the defaults:
 
 | Field | Type | Default | Meaning |
 |---|---|---|---|

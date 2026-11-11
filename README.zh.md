@@ -27,7 +27,7 @@
 - **默认只在失焦时提醒**（`condition: "unfocused"`），可在设置里改成 `always`。
 - **点击回到 Harness**：点通知会聚焦窗口。
 - **只提醒顶层会话**：子 agent、队友一律静默，多 agent 并行时不刷屏。
-- **设置页可配置**：插件行会自动生成设置页（总开关、触发条件、事件类型、审批宽限）。
+- **按 profile 配置**：总开关、触发条件、事件类型、审批宽限都来自 profile patch 里 `dsh-notify` 行的 config（见[配置](#配置)）。
 
 通知文案跟随客户端语言；上面截图在中文环境截取，可用 [验证安装](#验证安装) 里的预览命令复现。
 
@@ -75,7 +75,25 @@ dsh plugin --profile web remove @hmydk/dsh-notify
 
 ## 配置
 
-插件行的设置页由 `Config` schema 自动生成，可直接在 **设置 → 插件 → dsh-notify** 里改；bundle patch 里也固定了默认值：
+DSH 0.2.x 还不会给第三方插件生成设置页，所以界面上没有可点的入口；配置要改 profile 的 Cordis patch——
+Desktop 是 `~/.dsh/profiles/desktop/cordis.patch.yml`，命令行 profile 是 `~/.dsh/profiles/<profile>/cordis.patch.yml`。
+在文件里追加：
+
+```yaml
+- id: dsh-notify
+  config:
+    enabled: true
+    condition: unfocused # 或 always
+    events:
+      - turn-complete
+      - approval-requested
+    approvalGraceMs: 2000
+```
+
+保存后 DSH 会重载 patch，Host 半会把新配置推给已打开的页面；如果页面没更新，刷新一下（Cmd/Ctrl+R）。
+profile patch 会整体替换该条目的 `config`，但 schema 默认值和 Host 半的兜底会补上你没写的字段，建议四个都写全。
+
+bundle patch 里也固定了默认值：
 
 | 字段 | 类型 | 默认值 | 含义 |
 |---|---|---|---|
