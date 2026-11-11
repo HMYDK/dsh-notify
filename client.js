@@ -187,3 +187,6 @@ window.__ModuleLoader__.load({
 })
 
 // client-half revision bump: forces the client module registry to republish this bundle.
+
+// dsh-notify client half: keep the bundle revision fresh for live plugin reloads.
+// live-reload nudge for the browser half.

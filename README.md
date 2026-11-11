@@ -15,6 +15,23 @@ condition to `always` if you want every event announced.
 
 English | [中文](README.zh.md)
 
+## What you get
+
+Two native notifications, rendered by the Harness app and attributed to it:
+
+| Turn complete | Approval needed |
+|---|---|
+| <img src="docs/screenshots/turn-complete.png" width="420" alt="Turn-complete notification: 任务完成 / Codex 任务完成通知机制调研" /> | <img src="docs/screenshots/approval-requested.png" width="420" alt="Approval notification: 需要审批 / Codex 任务完成通知机制调研 · bash" /> |
+
+- **Turn-complete alert** — a root session leaves `running` for `idle` while the Harness window is in the background; the banner carries the session title.
+- **Approval alert** — a tool call is still waiting for your approval after the grace window, so requests that resolve themselves stay quiet; the banner names the session and the tool.
+- **Focus-aware by default** (`condition: "unfocused"`), switchable to `always` in Settings.
+- **Click to return** — clicking the notification focuses the Harness window.
+- **Top-level sessions only** — subagents and teammates never raise a banner, so parallel work stays quiet.
+- **Configurable in Settings** — the plugin row gets a settings page generated from its schema (enabled, condition, events, approval grace).
+
+The banner copy follows the client locale; the screenshots above were captured on a Chinese-locale Harness and can be reproduced with the preview commands under [Verify an installation](#verify-an-installation).
+
 ## Requirements
 
 - DeepSeek Harness `>= 0.2.1-rc.3` (desktop app or a Web GUI served on `127.0.0.1`).
@@ -70,8 +87,9 @@ curl -N http://127.0.0.1:53221/notify/events
 # 2. Is the browser half connected? `clients` should be 1 while the GUI page is open.
 curl -s http://127.0.0.1:53221/notify/status
 
-# 3. Show a forced test notification in every open tab (ignores the focus condition).
-curl -s http://127.0.0.1:53221/notify/test
+# 3. Preview the two notification shapes (bypasses the focus condition).
+curl -s "http://127.0.0.1:53221/notify/test?kind=turn-complete"
+curl -s "http://127.0.0.1:53221/notify/test?kind=approval-requested"
 ```
 
 `/notify/status` also reports `lastAck` — what the browser half did with the most recent event

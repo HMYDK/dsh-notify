@@ -334,7 +334,30 @@ export function apply(ctx, config) {
       res.end()
       return
     }
-    const event = { id: nextId('test'), type: 'test', force: true, at: Date.now() }
+    // `kind` previews one real event shape: the composed notification text is
+    // the same one a live turn or approval produces, so an installation can be
+    // checked without waiting for one.
+    const kind = new URL(req.url ?? '/', 'http://localhost').searchParams.get('kind')
+    const type = kind === 'turn-complete' || kind === 'approval-requested' ? kind : 'test'
+    let event = { id: nextId('test'), type: 'test', force: true, at: Date.now() }
+    if (type !== 'test') {
+      let sessionId
+      try {
+        const root = ctx.get('agents')?.roots?.()[0]
+        if (root !== undefined) sessionId = String(root.id)
+      } catch {
+        // The preview degrades to sample text without a live root session.
+      }
+      event = {
+        id: nextId('test'),
+        type,
+        force: true,
+        sessionId,
+        title: sessionId === undefined ? 'dsh-notify' : titleOf(sessionId),
+        at: Date.now(),
+      }
+      if (type === 'approval-requested') event.toolName = 'bash'
+    }
     push(event)
     writeJson(res, 200, { ok: true, value: { subscribers: subscribers.size, event } })
   }

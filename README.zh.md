@@ -14,6 +14,23 @@
 
 [English](README.md) | 中文
 
+## 效果预览
+
+两条由 Harness App 自己弹出的原生系统通知：
+
+| 任务完成通知 | 需要审批通知 |
+|---|---|
+| <img src="docs/screenshots/turn-complete.png" width="420" alt="任务完成通知：任务完成 / Codex 任务完成通知机制调研" /> | <img src="docs/screenshots/approval-requested.png" width="420" alt="需要审批通知：需要审批 / Codex 任务完成通知机制调研 · bash" /> |
+
+- **任务完成提醒**：根会话从 `running` 变为 `idle`、且 Harness 窗口不在前台时弹出，横幅里带会话标题。
+- **审批提醒**：工具调用在宽限时间后仍在等你审批才提醒，自动放行的请求不会打扰；横幅带会话名和工具名。
+- **默认只在失焦时提醒**（`condition: "unfocused"`），可在设置里改成 `always`。
+- **点击回到 Harness**：点通知会聚焦窗口。
+- **只提醒顶层会话**：子 agent、队友一律静默，多 agent 并行时不刷屏。
+- **设置页可配置**：插件行会自动生成设置页（总开关、触发条件、事件类型、审批宽限）。
+
+通知文案跟随客户端语言；上面截图在中文环境截取，可用 [验证安装](#验证安装) 里的预览命令复现。
+
 ## 环境要求
 
 - DeepSeek Harness `>= 0.2.1-rc.3`（桌面 App，或跑在 `127.0.0.1` 的 Web GUI）。
@@ -64,8 +81,9 @@ curl -N http://127.0.0.1:53221/notify/events
 # 2. 浏览器半是否连上：GUI 页面开着时 clients 应该是 1
 curl -s http://127.0.0.1:53221/notify/status
 
-# 3. 往所有打开的页面推一条强制测试通知（忽略失焦条件）
-curl -s http://127.0.0.1:53221/notify/test
+# 3. 预览两种通知形态（忽略失焦条件）
+curl -s "http://127.0.0.1:53221/notify/test?kind=turn-complete"
+curl -s "http://127.0.0.1:53221/notify/test?kind=approval-requested"
 ```
 
 `/notify/status` 里的 `lastAck` 会告诉你浏览器半最近一次事件的处理结果（`shown`、`suppressed`、
