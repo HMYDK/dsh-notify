@@ -19,13 +19,13 @@ done
 if [ "$blocked" -eq 1 ]; then
 	cat >&2 <<'EOF'
 ✋ 拒绝直接 push 到 main / refusing to push to main.
-   main 分支已保护：改动必须走 Pull Request。
+   日常开发在 dev 分支，发版时再通过 PR 合入 main。
 
-   1) git switch -c fix/your-change        # 从 main 拉出特性分支
-   2) git commit -am "..." && git push -u origin fix/your-change
-   3) gh pr create --base main --fill      # 开 PR 并合并
+   1) git switch dev
+   2) git add -A && git commit -m "..."
+   3) git push                  # dev 允许直接 push
 
-   发布 tag 不受影响：git push origin vX.Y.Z
+   改动需经 PR 进入 main；发布 tag 不受影响：git push origin vX.Y.Z
 EOF
 	exit 1
 fi
