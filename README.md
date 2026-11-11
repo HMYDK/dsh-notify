@@ -40,27 +40,42 @@ The banner copy follows the client locale; the screenshots above were captured o
 
 ## Install
 
-From a local checkout (this is the development/review path; a rebuild after editing `index.js` /
-`client.js` needs a page refresh):
+The package is published on npm as
+[`@hmydk/dsh-notify`](https://www.npmjs.com/package/@hmydk/dsh-notify).
+
+**DeepSeek Harness Desktop** — no command line needed:
+
+1. Open **Plugins** in the sidebar.
+2. Choose **Add plugin** and enter `@hmydk/dsh-notify`.
+3. Install it, then **Enable now** (the bundle is listed as `dsh-notify`).
+4. Reload the window (Cmd/Ctrl+R) so the browser half is loaded.
+
+**`dsh web` or another profile** — requires `pnpm` on `PATH`:
 
 ```sh
-dsh plugin --profile desktop add link:/absolute/path/to/dsh-notify
+dsh plugin --profile web add @hmydk/dsh-notify
 ```
 
-Or install the published package once it exists on npm:
+Restart `dsh web` and reload the page. The command installs the package and selects its bundle.
+
+**From this checkout** (development): run `pnpm install --prod` here first, then
 
 ```sh
-dsh plugin --profile desktop add @hmydk/dsh-notify@latest
+dsh plugin --profile web add link:/absolute/path/to/dsh-notify
 ```
+
+`dsh plugin --profile web add github:HMYDK/dsh-notify` installs the current `main` branch instead.
+The Desktop profile is owned by the Desktop app, so a plain `dsh plugin --profile desktop ...` is
+rejected; Desktop users install through the **Plugins** page.
 
 The bundle patch mounts one row (`dsh-notify`) with both halves: the Host half detects events and
 streams them over a loopback route, the browser half shows the system notification. After
 installation, reload the GUI page once so the browser half is loaded.
 
-To uninstall:
+To uninstall, use **Remove** on the plugin's page in Desktop, or:
 
 ```sh
-dsh plugin --profile desktop remove @hmydk/dsh-notify
+dsh plugin --profile web remove @hmydk/dsh-notify
 ```
 
 ## Configuration

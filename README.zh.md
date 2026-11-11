@@ -38,25 +38,39 @@
 
 ## 安装
 
-从本地目录安装（开发/评审路径；改完 `index.js` / `client.js` 后需要刷新页面）：
+已发布到 npm：[`@hmydk/dsh-notify`](https://www.npmjs.com/package/@hmydk/dsh-notify)。
+
+**DeepSeek Harness Desktop**（不需要命令行）：
+
+1. 打开左侧 **插件（Plugins）** 页。
+2. 点 **添加插件（Add plugin）**，填 `@hmydk/dsh-notify`。
+3. 安装完成后点 **立即启用（Enable now）**（插件行名为 `dsh-notify`）。
+4. 刷新窗口（Cmd/Ctrl+R），浏览器半才会加载。
+
+**`dsh web` 或其它 profile**（需要 `pnpm` 在 `PATH` 上）：
 
 ```sh
-dsh plugin --profile desktop add link:/绝对路径/dsh-notify
+dsh plugin --profile web add @hmydk/dsh-notify
 ```
 
-发布到 npm 之后也可以直接装：
+重启 `dsh web` 后刷新页面。命令会自动安装并选中对应的 bundle。
+
+**从本仓库源码安装（开发用）**：先在本目录执行 `pnpm install --prod`，然后
 
 ```sh
-dsh plugin --profile desktop add @hmydk/dsh-notify@latest
+dsh plugin --profile web add link:/绝对路径/dsh-notify
 ```
+
+也可以用 `dsh plugin --profile web add github:HMYDK/dsh-notify` 直接装 `main` 分支的最新代码。
+desktop profile 由桌面 App 独占管理，普通 `dsh plugin --profile desktop ...` 会被拒绝，Desktop 用户请走 **插件** 页面。
 
 bundle patch 会挂载一个 `dsh-notify` 插件行：Host 半负责事件检测并通过回环路由推流，浏览器半负责弹系统通知。
 安装完成后刷新一次 GUI 页面，浏览器半才会加载。
 
-卸载：
+卸载：在 Desktop 插件页点 **移除**，或
 
 ```sh
-dsh plugin --profile desktop remove @hmydk/dsh-notify
+dsh plugin --profile web remove @hmydk/dsh-notify
 ```
 
 ## 配置
