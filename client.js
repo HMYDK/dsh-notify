@@ -22,6 +22,8 @@ window.__ModuleLoader__.load({
     const NAMESPACE = 'dsh-notify'
     /** Notification event ids the config accepts. */
     const EVENT_IDS = ['turn-complete', 'approval-requested']
+    /** A one-line turn summary shorter than this reads as noise, so prefer the prompt. */
+    const TURN_BODY_MIN = 8
     /** Client locale namespace for the settings page copy. */
     const LOCALE_NS = 'dsh-notify'
 
@@ -473,7 +475,17 @@ window.__ModuleLoader__.load({
               body: reason === undefined ? head : `${head}\n${reason}`,
             }
           }
-          return { title: zh ? '任务完成' : 'Task complete', body: title }
+          // The body describes the turn that just ended: the Host half sends a
+          // display-ready preview of its closing reply and its request. Fall
+          // back to the request, then to the session title.
+          const response = typeof event.response === 'string' && event.response !== '' ? event.response : undefined
+          const prompt = typeof event.prompt === 'string' && event.prompt !== '' ? event.prompt : undefined
+          const body =
+            (response !== undefined && response.length >= TURN_BODY_MIN ? response : undefined) ??
+            prompt ??
+            response ??
+            title
+          return { title: zh ? '任务完成' : 'Task complete', body }
         }
 
         const show = (event) => {

@@ -12,6 +12,7 @@ DSH 插件：会话**完成一轮任务**或**等待你审批**时弹出系统�
 | <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/turn-complete.png" width="420" alt="任务完成通知：任务完成 / Codex 任务完成通知机制调研" /> | <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/approval-requested.png" width="420" alt="需要审批通知：需要审批 / Codex 任务完成通知机制调研 · bash" /> |
 
 - 只提醒根会话：子 agent、队友静默，多 agent 并行不刷屏。
+- 完成通知的正文是本轮结论摘要，不是会话标题。
 - 默认失焦才提醒（`condition: "unfocused"`），可改成 `always`。
 - 设置页可调总开关、提醒时机、事件类型和审批宽限。
 
@@ -73,7 +74,8 @@ curl -s "http://127.0.0.1:$PORT/notify/test?kind=turn-complete"   # 预览通知
 
 ## 开发
 
-纯 ESM，无构建：`index.js` 是 Host 半，`client.js` 是浏览器半，`locale/*.json` 是文案。改完重装并重启，
+纯 ESM，无构建：`index.js` 是 Host 半，`client.js` 是浏览器半，`content.js` 生成通知正文，
+`locale/*.json` 是文案。改完重装并重启，
 浏览器半刷新页面即可。
 
 日常开发在 `dev` 分支；`main` 受保护、只能通过 PR 合入，发版时才把 `dev` 合过去。

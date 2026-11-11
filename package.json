@@ -21,6 +21,7 @@
   "files": [
     "index.js",
     "client.js",
+    "content.js",
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",

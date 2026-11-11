@@ -17,6 +17,7 @@
  */
 
 import z from '@deepseek-ai/schemastery'
+import { summarizeMessages } from './content.js'
 
 /** Hard requirement: the shared web server carries the browser-half wire. */
 export const inject = ['webServer']
@@ -210,6 +211,17 @@ export function apply(ctx, config) {
     return undefined
   }
 
+  /** One session's derived message history, or undefined when the store cannot hand it over. */
+  const messagesOf = (sessionId) => {
+    try {
+      const session = ctx.get('sessions')?.get?.(sessionId)
+      if (session === undefined || typeof session.deriveMessages !== 'function') return undefined
+      return session.deriveMessages()
+    } catch {
+      return undefined
+    }
+  }
+
   /** Notify only for top-level sessions; subagents and teammates stay quiet. */
   const isRootAgent = (agent) => {
     const agents = ctx.get('agents')
@@ -357,6 +369,15 @@ export function apply(ctx, config) {
         at: Date.now(),
       }
       if (type === 'approval-requested') event.toolName = 'bash'
+      if (type === 'turn-complete') {
+        const digest = sessionId === undefined ? undefined : summarizeMessages(messagesOf(sessionId))
+        event.prompt = digest?.prompt
+        event.response = digest?.response
+        if (event.prompt === undefined && event.response === undefined) {
+          // No live session to borrow from: still preview the composed shape.
+          event.response = '预览：任务完成时会用这一轮的结论摘要作为正文。'
+        }
+      }
     }
     push(event)
     writeJson(res, 200, { ok: true, value: { subscribers: subscribers.size, event } })
@@ -395,7 +416,18 @@ export function apply(ctx, config) {
     const cfg = currentConfig()
     if (!cfg.enabled || !cfg.events.includes('turn-complete')) return
     if (!isRootAgent(agent)) return
-    push({ id: nextId('turn'), type: 'turn-complete', sessionId, title: titleOf(sessionId), at: Date.now() })
+    // The banner should describe this turn, not repeat the session title, so
+    // attach the latest prompt and closing reply as display previews.
+    const digest = summarizeMessages(messagesOf(sessionId))
+    push({
+      id: nextId('turn'),
+      type: 'turn-complete',
+      sessionId,
+      title: titleOf(sessionId),
+      prompt: digest?.prompt,
+      response: digest?.response,
+      at: Date.now(),
+    })
   })
 
   ctx.on('agent/disposed', ({ agent }) => {
