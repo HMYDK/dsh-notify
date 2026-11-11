@@ -1,54 +1,49 @@
-# dsh-notify · desktop notifications for DeepSeek Harness
+# dsh-notify · DeepSeek Harness 桌面通知
 
 [![npm](https://img.shields.io/npm/v/@hmydk/dsh-notify?label=npm)](https://www.npmjs.com/package/@hmydk/dsh-notify)
 ![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
-A DeepSeek Harness (DSH) plugin that raises a native desktop notification when a session **finishes a
-turn** or **waits for your approval**. Banners appear only while the Harness window is in the
-background; clicking one focuses Harness.
+DSH 插件：会话**完成一轮任务**或**等待你审批**时弹出系统桌面通知。默认只在 Harness 窗口不在前台时
+提醒，点击通知回到 Harness。
 
-English | [中文](README.zh.md)
-
-| Turn complete | Approval needed |
+| 任务完成 | 需要审批 |
 |---|---|
-| <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/turn-complete.png" width="420" alt="Turn-complete notification: 任务完成 / Codex 任务完成通知机制调研" /> | <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/approval-requested.png" width="420" alt="Approval notification: 需要审批 / Codex 任务完成通知机制调研 · bash" /> |
+| <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/turn-complete.png" width="420" alt="任务完成通知：任务完成 / Codex 任务完成通知机制调研" /> | <img src="https://cdn.jsdelivr.net/gh/HMYDK/dsh-notify@main/docs/screenshots/approval-requested.png" width="420" alt="需要审批通知：需要审批 / Codex 任务完成通知机制调研 · bash" /> |
 
-- Top-level sessions only: subagents and teammates stay silent, so parallel work doesn't spam you.
-- Focus-aware by default (`condition: "unfocused"`); switch to `always` for every event.
-- Settings page for the master switch, focus condition, event types and approval grace.
+- 只提醒根会话：子 agent、队友静默，多 agent 并行不刷屏。
+- 默认失焦才提醒（`condition: "unfocused"`），可改成 `always`。
+- 设置页可调总开关、提醒时机、事件类型和审批宽限。
 
-## Install
+## 安装
 
-Requires DeepSeek Harness `>= 0.2.1-rc.3` and notification permission for the Harness app (macOS asks
-on the first banner).
+需要 DeepSeek Harness `>= 0.2.1-rc.3`，系统需允许 Harness 发通知（macOS 首次会询问）。
 
-**Desktop**: **Plugins** page → **Add plugin** → enter `@hmydk/dsh-notify` → install → **Enable now**
-(the row is `dsh-notify`) → reload the window.
+**Desktop**：左侧 **插件** 页 → **添加插件** → 输入 `@hmydk/dsh-notify` → 安装 → **立即启用**
+（行名 `dsh-notify`）→ 刷新窗口。
 
-**`dsh web` or another profile**:
+**`dsh web` 或其它 profile**：
 
 ```sh
 dsh plugin --profile web add @hmydk/dsh-notify
 ```
 
-Restart `dsh web` and reload the page. Uninstall with
-`dsh plugin --profile web remove @hmydk/dsh-notify`, or use **Remove** on Desktop's Plugins page.
+重启 `dsh web` 并刷新页面。卸载：`dsh plugin --profile web remove @hmydk/dsh-notify`，
+或在 Desktop 插件页点 **移除**。
 
-## Configuration
+## 配置
 
-**Settings → Notifications** (settings live in the account menu). Changes are written back to the
-profile's `cordis.patch.yml` and apply immediately; **Send a test notification** previews one.
+**设置 → 通知**（设置入口在账户菜单）。改动会写回 profile 的 `cordis.patch.yml` 并即时生效；
+**发送测试通知** 可立即预览一条。
 
-| Field | Default | Meaning |
+| 字段 | 默认 | 说明 |
 |---|---|---|
-| `enabled` | `true` | Master switch |
-| `condition` | `unfocused` | `unfocused`: only while Harness is in the background; `always`: every event |
-| `events` | both | Event types that notify: `turn-complete`, `approval-requested` |
-| `approvalGraceMs` | `2000` | Wait this long before alerting an approval (0–60000); auto-resolved requests stay silent |
+| `enabled` | `true` | 总开关 |
+| `condition` | `unfocused` | `unfocused` 仅窗口失焦时提醒；`always` 总是提醒 |
+| `events` | 全部 | 触发提醒的事件：`turn-complete`、`approval-requested` |
+| `approvalGraceMs` | `2000` | 审批等待多久才提醒（0–60000）；自动放行的请求不打扰 |
 
-Releases without the settings page: edit the profile patch
-(`~/.dsh/profiles/<profile>/cordis.patch.yml`) instead:
+没有设置页的旧版本可直接改 profile patch（`~/.dsh/profiles/<profile>/cordis.patch.yml`）：
 
 ```yaml
 - id: dsh-notify
@@ -56,55 +51,53 @@ Releases without the settings page: edit the profile patch
     condition: always
 ```
 
-## Limitations
+## 已知限制
 
-- Routes are loopback-only, so a Web GUI opened through remote access gets no notifications.
-- One banner per open page/tab.
-- Root sessions only; no per-teammate alerts.
-- `approvalGraceMs` is a heuristic: an approval resolved automatically just after the grace window may
-  still produce one banner.
-- macOS attributes banners to the Harness app; allow it in System Settings.
+- 插件路由仅回环：通过远程访问打开的 Web GUI 收不到通知。
+- 同时打开多个页面/标签，各自弹一条。
+- 只提醒根会话，不按队友逐个提醒。
+- `approvalGraceMs` 是启发式：宽限时间之后才被自动处理的审批仍可能多弹一次。
+- macOS 上通知归属于 Harness App，需在系统设置里允许。
 
 <details>
-<summary>Troubleshooting</summary>
+<summary>排查</summary>
 
 ```sh
-PORT=53221   # port from the GUI URL
-curl -N http://127.0.0.1:$PORT/notify/events   # Host half mounted: one config frame, then the stream stays open
-curl -s http://127.0.0.1:$PORT/notify/status   # browser half connected: clients / lastAck
-curl -s "http://127.0.0.1:$PORT/notify/test?kind=turn-complete"   # preview a banner
+PORT=53221   # 换成 GUI 地址里的端口
+curl -N http://127.0.0.1:$PORT/notify/events   # Host 半是否挂载：先收到一帧 config，之后流保持打开
+curl -s http://127.0.0.1:$PORT/notify/status   # 浏览器半是否连上：clients / lastAck
+curl -s "http://127.0.0.1:$PORT/notify/test?kind=turn-complete"   # 预览通知
 ```
 
 </details>
 
-## Development
+## 开发
 
-Plain ESM, no build step: `index.js` is the Host half, `client.js` the browser half, `locale/*.json` the
-copy. Reinstall and restart after editing; the browser half reloads with the page.
+纯 ESM，无构建：`index.js` 是 Host 半，`client.js` 是浏览器半，`locale/*.json` 是文案。改完重装并重启，
+浏览器半刷新页面即可。
 
-Day-to-day work happens on `dev`; `main` is protected and only accepts pull requests, so `dev` is merged
-into it when cutting a release.
+日常开发在 `dev` 分支；`main` 受保护、只能通过 PR 合入，发版时才把 `dev` 合过去。
 
 ```sh
 git switch dev
-npm run setup:hooks   # once per clone: local pushes to main are rejected
+npm run setup:hooks   # 新克隆后执行一次：本地直接 push main 会被拒绝
 ```
 
-Before installing from this checkout with `link:`, run `pnpm install --prod`, then:
+本地 `link:` 安装前先执行 `pnpm install --prod`，再：
 
 ```sh
 dsh plugin --profile web add link:$PWD
 ```
 
-Release: bump `version` in `package.json`, open a PR from `dev` into `main`, merge it, then tag:
+发版：改 `package.json` 的 `version`，`dev` 开 PR 合入 `main` 后打 tag：
 
 ```sh
 git tag v0.3.0 && git push origin v0.3.0
 ```
 
-The [Release workflow](.github/workflows/release.yml) checks the tag against the version, publishes to
-npm over OIDC and creates a GitHub Release; no npm token lives in the repository.
+[Release workflow](.github/workflows/release.yml) 校验 tag 与版本一致后经 OIDC 发布到 npm 并创建
+GitHub Release，仓库不需要 npm token。
 
-## License
+## 许可证
 
 MIT
