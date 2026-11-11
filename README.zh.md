@@ -168,14 +168,30 @@ client-module 产物（`window.__ModuleLoader__.load({ id, factory })`），`cor
 `node_modules`。请先在本目录执行一次 `pnpm install --prod`（或 `npm install --omit=dev`），
 让 `@deepseek-ai/schemastery` 出现在本地 `node_modules` 下；从 npm 安装时会自动解析，无需额外步骤。
 
+### 分支与 PR
+
+`main` 是受保护分支（GitHub 仓库 Settings → Branches 中的规则）：不能直接 push，也不能强制推送或删除，
+所有改动都必须通过 Pull Request 合入。本地请不要在 `main` 上开发，从 `main` 拉出特性分支再提 PR：
+
+```sh
+git switch -c fix/your-change
+git commit -am "fix: ..."
+git push -u origin fix/your-change
+gh pr create --base main --fill
+```
+
+新克隆后执行一次 `npm run setup:hooks`（等价于 `git config core.hooksPath .githooks`），启用仓库里的
+pre-push 钩子：误推 `main` 时会在本地直接报错，提示改走 PR。服务端的分支保护才是最终防线，本地钩子
+只是快速反馈；发布 tag 的推送不受影响。
+
 ### 发版
 
 发版由 GitHub Actions 通过 npm trusted publishing（OIDC）完成，仓库里不保存 npm token。
-把 `package.json` 的 `version` 改好并提交后，打 tag 推送即可：
+把 `package.json` 的 `version` 改好、经 PR 合入 `main` 后，在 `main` 上打 tag 推送即可：
 
 ```sh
 git tag v0.1.1
-git push origin main v0.1.1
+git push origin v0.1.1
 ```
 
 [Release workflow](.github/workflows/release.yml) 会校验 tag 与 `package.json` 版本一致，带 provenance

@@ -7,6 +7,9 @@
   "engines": {
     "node": ">=20"
   },
+  "scripts": {
+    "setup:hooks": "git config core.hooksPath .githooks"
+  },
   "main": "index.js",
   "exports": {
     ".": "./index.js",
