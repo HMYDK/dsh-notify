@@ -197,14 +197,33 @@ the checkout, not from the profile. Run `pnpm install --prod` (or `npm install -
 this directory so `@deepseek-ai/schemastery` exists under `node_modules`; npm-published installs
 resolve it automatically and need no extra step.
 
+### Branches and pull requests
+
+`main` is protected (rules under the repository's Settings → Branches): it rejects direct pushes,
+force-pushes, and deletions, so every change must land through a pull request. Don't develop on
+`main`; cut a topic branch from it and open a PR:
+
+```sh
+git switch -c fix/your-change
+git commit -am "fix: ..."
+git push -u origin fix/your-change
+gh pr create --base main --fill
+```
+
+Run `npm run setup:hooks` once after cloning (equivalent to `git config core.hooksPath .githooks`)
+to enable the repository's pre-push hook: an accidental push to `main` then fails locally with a
+pointer to the PR flow. That hook is only fast local feedback — the GitHub branch protection is the
+actual enforcement. Tag pushes for releases are unaffected.
+
 ### Releasing
 
 Releases are published from GitHub Actions through npm trusted publishing (OIDC); no npm token is
-stored in the repository. Bump `version` in `package.json`, commit it, then tag the commit and push:
+stored in the repository. Bump `version` in `package.json`, get it merged into `main` through a PR,
+then tag that commit and push the tag:
 
 ```sh
 git tag v0.1.1
-git push origin main v0.1.1
+git push origin v0.1.1
 ```
 
 The [Release workflow](.github/workflows/release.yml) checks the tag against `package.json`,

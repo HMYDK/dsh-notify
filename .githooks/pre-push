@@ -1,0 +1,33 @@
+#!/bin/sh
+# Blocks direct pushes to protected branches. `main` may only change through a
+# pull request, so refuse any push whose destination is refs/heads/main.
+#
+# Enable in a fresh clone with:
+#   git config core.hooksPath .githooks
+# (npm/pnpm shorthand: `npm run setup:hooks`)
+#
+# This hook is only fast local feedback; the server-side branch protection on
+# GitHub is the actual enforcement. Tags are not affected.
+
+blocked=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+	case "$remote_ref" in
+	refs/heads/main) blocked=1 ;;
+	esac
+done
+
+if [ "$blocked" -eq 1 ]; then
+	cat >&2 <<'EOF'
+✋ 拒绝直接 push 到 main / refusing to push to main.
+   main 分支已保护：改动必须走 Pull Request。
+
+   1) git switch -c fix/your-change        # 从 main 拉出特性分支
+   2) git commit -am "..." && git push -u origin fix/your-change
+   3) gh pr create --base main --fill      # 开 PR 并合并
+
+   发布 tag 不受影响：git push origin vX.Y.Z
+EOF
+	exit 1
+fi
+
+exit 0
