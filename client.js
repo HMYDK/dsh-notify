@@ -22,6 +22,8 @@ window.__ModuleLoader__.load({
     const NAMESPACE = 'dsh-notify'
     /** Notification event ids the config accepts. */
     const EVENT_IDS = ['turn-complete', 'approval-requested']
+    /** A one-line turn summary shorter than this reads as noise, so prefer the prompt. */
+    const TURN_BODY_MIN = 8
     /** Client locale namespace for the settings page copy. */
     const LOCALE_NS = 'dsh-notify'
 
@@ -434,6 +436,23 @@ window.__ModuleLoader__.load({
           }
         }
 
+        /**
+         * Best-effort jump to the session the notification belongs to. The full
+         * Web GUI exposes `uiWorkspace.openSession`; other shells fall back to
+         * focusing the window alone.
+         */
+        const revealSession = (sessionId) => {
+          if (typeof sessionId !== 'string' || sessionId === '') return
+          try {
+            const workspace = ctx.get('uiWorkspace')
+            if (workspace !== undefined && typeof workspace.openSession === 'function') {
+              workspace.openSession(sessionId)
+            }
+          } catch {
+            // Navigation is best-effort; the click still focuses the window.
+          }
+        }
+
         const ack = (event, state) => {
           const url = routeUrl('notify/ack')
           if (url === undefined) return
@@ -465,15 +484,38 @@ window.__ModuleLoader__.load({
                 ? 'DSH 会话'
                 : 'DSH session'
           if (event.type === 'approval-requested') {
+            // Approval bodies carry what the tool is about to do (command or
+            // closest argument) plus the localized reason, not the session title.
             const tool = typeof event.toolName === 'string' && event.toolName !== '' ? event.toolName : undefined
-            const reason = typeof event.reason === 'string' && event.reason !== '' ? event.reason : undefined
-            const head = tool === undefined ? title : `${title} · ${tool}`
+            const detail = typeof event.toolDetail === 'string' && event.toolDetail !== '' ? event.toolDetail : undefined
+            const display = event.displayReason
+            const localized =
+              display !== null && typeof display === 'object'
+                ? (zh ? display.zh : display.en) ?? display.en ?? display.zh
+                : undefined
+            const reason =
+              typeof localized === 'string' && localized !== ''
+                ? localized
+                : typeof event.reason === 'string' && event.reason !== ''
+                  ? event.reason
+                  : undefined
+            const head = detail === undefined ? tool ?? title : tool === undefined ? detail : `${tool} · ${detail}`
             return {
               title: zh ? '需要审批' : 'Approval needed',
               body: reason === undefined ? head : `${head}\n${reason}`,
             }
           }
-          return { title: zh ? '任务完成' : 'Task complete', body: title }
+          // The body describes the turn that just ended: the Host half sends a
+          // display-ready preview of its closing reply and its request. Fall
+          // back to the request, then to the session title.
+          const response = typeof event.response === 'string' && event.response !== '' ? event.response : undefined
+          const prompt = typeof event.prompt === 'string' && event.prompt !== '' ? event.prompt : undefined
+          const body =
+            (response !== undefined && response.length >= TURN_BODY_MIN ? response : undefined) ??
+            prompt ??
+            response ??
+            title
+          return { title: zh ? '任务完成' : 'Task complete', body }
         }
 
         const show = (event) => {
@@ -519,6 +561,7 @@ window.__ModuleLoader__.load({
               } catch {
                 // Browsers may refuse to focus a background window.
               }
+              revealSession(event.sessionId)
               try {
                 notification.close()
               } catch {

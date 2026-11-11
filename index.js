@@ -17,6 +17,7 @@
  */
 
 import z from '@deepseek-ai/schemastery'
+import { describeToolCall, summarizeMessages } from './content.js'
 
 /** Hard requirement: the shared web server carries the browser-half wire. */
 export const inject = ['webServer']
@@ -76,6 +77,17 @@ function oneLine(text, limit = 200) {
   const normalized = text.replace(/\s+/gu, ' ').trim()
   if (normalized === '') return undefined
   return normalized.length > limit ? `${normalized.slice(0, limit - 1)}…` : normalized
+}
+
+/** Keep only the locales the browser half can render. */
+function displayReasonOf(displayReason) {
+  if (displayReason === null || typeof displayReason !== 'object') return undefined
+  const localized = {}
+  for (const locale of ['en', 'zh']) {
+    const text = oneLine(displayReason[locale], 200)
+    if (text !== undefined) localized[locale] = text
+  }
+  return Object.keys(localized).length === 0 ? undefined : localized
 }
 
 /** JSON response helper. */
@@ -208,6 +220,17 @@ export function apply(ctx, config) {
       // Title lookup is decorative; a missing title never blocks the alert.
     }
     return undefined
+  }
+
+  /** One session's derived message history, or undefined when the store cannot hand it over. */
+  const messagesOf = (sessionId) => {
+    try {
+      const session = ctx.get('sessions')?.get?.(sessionId)
+      if (session === undefined || typeof session.deriveMessages !== 'function') return undefined
+      return session.deriveMessages()
+    } catch {
+      return undefined
+    }
   }
 
   /** Notify only for top-level sessions; subagents and teammates stay quiet. */
@@ -356,7 +379,21 @@ export function apply(ctx, config) {
         title: sessionId === undefined ? 'dsh-notify' : titleOf(sessionId),
         at: Date.now(),
       }
-      if (type === 'approval-requested') event.toolName = 'bash'
+      if (type === 'approval-requested') {
+        // No live pending request to borrow from: preview the composed shape.
+        event.toolName = 'bash'
+        event.toolDetail = 'git push origin dev'
+        event.reason = '预览：这条通知会显示具体要执行的命令和审批原因。'
+      }
+      if (type === 'turn-complete') {
+        const digest = sessionId === undefined ? undefined : summarizeMessages(messagesOf(sessionId))
+        event.prompt = digest?.prompt
+        event.response = digest?.response
+        if (event.prompt === undefined && event.response === undefined) {
+          // No live session to borrow from: still preview the composed shape.
+          event.response = '预览：任务完成时会用这一轮的结论摘要作为正文。'
+        }
+      }
     }
     push(event)
     writeJson(res, 200, { ok: true, value: { subscribers: subscribers.size, event } })
@@ -395,7 +432,18 @@ export function apply(ctx, config) {
     const cfg = currentConfig()
     if (!cfg.enabled || !cfg.events.includes('turn-complete')) return
     if (!isRootAgent(agent)) return
-    push({ id: nextId('turn'), type: 'turn-complete', sessionId, title: titleOf(sessionId), at: Date.now() })
+    // The banner should describe this turn, not repeat the session title, so
+    // attach the latest prompt and closing reply as display previews.
+    const digest = summarizeMessages(messagesOf(sessionId))
+    push({
+      id: nextId('turn'),
+      type: 'turn-complete',
+      sessionId,
+      title: titleOf(sessionId),
+      prompt: digest?.prompt,
+      response: digest?.response,
+      at: Date.now(),
+    })
   })
 
   ctx.on('agent/disposed', ({ agent }) => {
@@ -415,17 +463,22 @@ export function apply(ctx, config) {
         timers.delete(timer)
         const latest = currentConfig()
         if (!latest.enabled || !latest.events.includes('approval-requested')) return
-        const reasonParts = [
-          oneLine(req.reason, 160),
-          oneLine(req.displayReason?.en ?? req.displayReason?.zh, 160),
-        ].filter((part) => part !== undefined)
+        // Describe what the tool is about to do, not which session asked: the
+        // banner should carry the command (or closest argument) and the reason.
+        const call = describeToolCall(
+          messagesOf(sessionId),
+          req.callId === undefined ? undefined : String(req.callId),
+          typeof req.toolName === 'string' ? req.toolName : undefined,
+        )
         push({
           id: nextId('approval'),
           type: 'approval-requested',
           sessionId,
           title: titleOf(sessionId),
-          toolName: typeof req.toolName === 'string' ? req.toolName : undefined,
-          reason: reasonParts[0],
+          toolName: call?.name ?? (typeof req.toolName === 'string' ? req.toolName : undefined),
+          toolDetail: call?.detail,
+          reason: oneLine(req.reason, 200),
+          displayReason: displayReasonOf(req.displayReason),
           at: Date.now(),
         })
       }, delay)

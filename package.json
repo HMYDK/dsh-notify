@@ -21,12 +21,12 @@
   "files": [
     "index.js",
     "client.js",
+    "content.js",
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
     "docs/screenshots/*.png",
     "README.md",
-    "README.zh.md",
     "LICENSE"
   ],
   "dsh": {
