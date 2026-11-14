@@ -8,7 +8,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "setup:hooks": "git config core.hooksPath .githooks"
+    "setup:hooks": "git config core.hooksPath .githooks",
+    "test": "node --test test/*.test.js"
   },
   "main": "index.js",
   "exports": {
