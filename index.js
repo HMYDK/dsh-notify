@@ -233,13 +233,23 @@ export function apply(ctx, config) {
     }
   }
 
-  /** Notify only for top-level sessions; subagents and teammates stay quiet. */
+  /**
+   * Notify only for top-level sessions; subagents and teammates stay quiet.
+   *
+   * DSH removed `AgentRegistry.roots()` in 0.2.1-rc.3, so membership comes from
+   * the session header: a delegated child is marked `origin: 'subagent'`, and a
+   * session recorded before that field existed still carries a positive
+   * `delegationDepth`. An unreadable header never silences a possible root.
+   */
   const isRootAgent = (agent) => {
-    const agents = ctx.get('agents')
-    if (agents === undefined) return true
     try {
-      return agents.roots().some((root) => root.id === agent.id)
-    } catch {
+      const header = agent?.session?.header
+      if (header === undefined) return true
+      if (header.origin === 'subagent') return false
+      return !(typeof header.delegationDepth === 'number' && header.delegationDepth > 0)
+    } catch (error) {
+      // Fail open so a future Host change cannot silence every alert, but say so.
+      log(`root-agent check failed: ${String(error)}`)
       return true
     }
   }
@@ -366,7 +376,9 @@ export function apply(ctx, config) {
     if (type !== 'test') {
       let sessionId
       try {
-        const root = ctx.get('agents')?.roots?.()[0]
+        // Preview through a live root session, so the composed text matches a
+        // real turn instead of falling back to sample copy.
+        const root = ctx.get('agents')?.list?.().find((candidate) => isRootAgent(candidate))
         if (root !== undefined) sessionId = String(root.id)
       } catch {
         // The preview degrades to sample text without a live root session.
