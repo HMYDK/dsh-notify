@@ -79,6 +79,9 @@ curl -s "http://127.0.0.1:$PORT/notify/test?kind=turn-complete"   # 预览通知
 `locale/*.json` 是文案。改完重装并重启，
 浏览器半刷新页面即可。
 
+`npm test` 用 Node 内置的测试运行器跑 Host 半的回归测试：subagent 静默、根会话提醒、
+审批提醒，以及测试通知预览。
+
 日常开发在 `dev` 分支；`main` 受保护、只能通过 PR 合入，发版时才把 `dev` 合过去。
 
 ```sh
